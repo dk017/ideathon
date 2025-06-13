@@ -34,19 +34,22 @@ export function IdeaCreationWizard({ userId }: IdeaCreationWizardProps) {
       level: string;
       skillName: string;
     }>,
+    hackathonId: "",
   });
   const [availableSkills, setAvailableSkills] = useState([]);
   const [selectedSkill, setSelectedSkill] = useState("");
   const [selectedLevel, setSelectedLevel] = useState("");
+  const [availableEvents, setAvailableEvents] = useState<any[]>([]);
   const router = useRouter();
 
   const fetchSkills = async () => {
     try {
-      const response = await fetch("/api/skills");
+      const response = await fetch("/api/skills/all");
       if (!response.ok) {
         throw new Error("Failed to fetch skills");
       }
       const skills = await response.json();
+      console.log("Fetched skills:", skills);
       setAvailableSkills(skills);
     } catch (error) {
       console.error("Error fetching skills:", error);
@@ -54,8 +57,21 @@ export function IdeaCreationWizard({ userId }: IdeaCreationWizardProps) {
     }
   };
 
+  const fetchEvents = async () => {
+    try {
+      const response = await fetch("/api/events");
+      if (!response.ok) throw new Error("Failed to fetch events");
+      const events = await response.json();
+      setAvailableEvents(events);
+    } catch (error) {
+      console.error("Error fetching events:", error);
+      toast.error("Failed to load events. Please try again.");
+    }
+  };
+
   useEffect(() => {
     fetchSkills();
+    fetchEvents();
   }, []);
 
   const handleNext = () => {
@@ -120,7 +136,13 @@ export function IdeaCreationWizard({ userId }: IdeaCreationWizardProps) {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          hackathonId:
+            formData.hackathonId === "independent"
+              ? null
+              : formData.hackathonId,
+        }),
       });
 
       if (!response.ok) {
@@ -179,6 +201,30 @@ export function IdeaCreationWizard({ userId }: IdeaCreationWizardProps) {
                   setFormData({ ...formData, description: e.target.value })
                 }
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="event">Event (optional)</Label>
+              <Select
+                value={formData.hackathonId || "independent"}
+                onValueChange={(val) =>
+                  setFormData({ ...formData, hackathonId: val })
+                }
+              >
+                <SelectTrigger id="event">
+                  <SelectValue placeholder="Independent (no event)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="independent">
+                    Independent (no event)
+                  </SelectItem>
+                  {availableEvents.map((event: any) => (
+                    <SelectItem key={event.id} value={event.id}>
+                      {event.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </CardContent>
         </Card>

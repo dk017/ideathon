@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/auth";
+import { auth } from "@/lib/auth";
 import { notFound } from "next/navigation";
 import { IdeaDetail } from "@/components/idea-detail";
 
@@ -48,6 +48,11 @@ export default async function IdeaPage({ params }: IdeaPageProps) {
       joinRequests: {
         include: {
           user: true,
+        },
+      },
+      kanbanCards: {
+        include: {
+          assignee: true,
         },
       },
     },

@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import { hash } from 'bcryptjs';
+import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
@@ -8,35 +8,56 @@ async function main() {
 
   // Create initial skills
   const skills = await Promise.all([
-    prisma.skill.create({ data: { name: 'React' } }),
-    prisma.skill.create({ data: { name: 'TypeScript' } }),
-    prisma.skill.create({ data: { name: 'Node.js' } }),
-    prisma.skill.create({ data: { name: 'UI/UX Design' } }),
-    prisma.skill.create({ data: { name: 'Project Management' } }),
+    prisma.skill.upsert({
+      where: { name: 'React' },
+      update: {},
+      create: { name: 'React' }
+    }),
+    prisma.skill.upsert({
+      where: { name: 'TypeScript' },
+      update: {},
+      create: { name: 'TypeScript' }
+    }),
+    prisma.skill.upsert({
+      where: { name: 'Node.js' },
+      update: {},
+      create: { name: 'Node.js' }
+    }),
+    prisma.skill.upsert({
+      where: { name: 'UI/UX Design' },
+      update: {},
+      create: { name: 'UI/UX Design' }
+    }),
+    prisma.skill.upsert({
+      where: { name: 'Project Management' },
+      update: {},
+      create: { name: 'Project Management' }
+    }),
   ]);
 
   // Create a test user
-  const user = await prisma.user.create({
-    data: {
-      name: 'Test User',
+  const hashedPassword = await bcrypt.hash('test123', 10);
+
+  const testUser = await prisma.user.upsert({
+    where: { email: 'test@example.com' },
+    update: {},
+    create: {
       email: 'test@example.com',
+      name: 'Test User',
+      password: hashedPassword,
       department: 'Engineering',
       bio: 'A passionate developer',
-      skills: {
-        create: [
-          { skillId: skills[0].id, level: 'EXPERT' },
-          { skillId: skills[1].id, level: 'INTERMEDIATE' },
-        ],
-      },
-    },
+    } as any,
   });
+
+  console.log('Test user created:', testUser);
 
   // Create a sample idea
   const idea = await prisma.idea.create({
     data: {
       title: 'AI-Powered Task Manager',
       description: 'A smart task management system that uses AI to prioritize and organize tasks.',
-      ownerId: user.id,
+      ownerId: testUser.id,
       status: 'PITCH',
       skillsNeeded: {
         create: [
@@ -47,7 +68,7 @@ async function main() {
       },
       members: {
         create: [
-          { userId: user.id, role: 'OWNER' },
+          { userId: testUser.id, role: 'OWNER' },
         ],
       },
       kanbanCards: {

@@ -15,10 +15,11 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:e2e": "playwright test",
-    "prisma:seed": "tsx prisma/seed.ts"
+    "prisma:seed": "tsx prisma/seed.ts",
+    "create-test-users": "ts-node --project tsconfig.json scripts/create-test-users.ts"
   },
   "prisma": {
-    "seed": "tsx prisma/seed.ts"
+    "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^1.0.0",
@@ -28,7 +29,7 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@hookform/resolvers": "^3.3.4",
     "@next/swc-wasm-nodejs": "13.5.1",
-    "@prisma/client": "^5.10.2",
+    "@prisma/client": "^5.22.0",
     "@radix-ui/react-accordion": "^1.2.0",
     "@radix-ui/react-alert-dialog": "^1.1.1",
     "@radix-ui/react-aspect-ratio": "^1.1.0",
@@ -75,7 +76,7 @@
     "next-auth": "^5.0.0-beta.28",
     "next-themes": "^0.2.1",
     "postcss": "^8",
-    "prisma": "^5.10.2",
+    "prisma": "^5.22.0",
     "react": "^19.1.0",
     "react-day-picker": "^8.10.1",
     "react-dom": "^19.1.0",

@@ -48,10 +48,13 @@ export function SkillMatrix() {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        console.log("Starting data fetch...");
         const [usersRes, skillsRes] = await Promise.all([
           fetch("/api/users"),
           fetch("/api/skills"),
         ]);
+
+        console.log("API Responses:", { usersRes, skillsRes });
 
         if (!usersRes.ok || !skillsRes.ok) {
           throw new Error("Failed to fetch data");
@@ -61,6 +64,8 @@ export function SkillMatrix() {
           usersRes.json(),
           skillsRes.json(),
         ]);
+
+        console.log("Fetched data:", { usersData, skillsData });
 
         setUsers(usersData);
         setFilteredUsers(usersData);

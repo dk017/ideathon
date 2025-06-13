@@ -1,20 +1,30 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { DndContext, DragEndEvent, closestCenter } from '@dnd-kit/core';
-import { SortableContext, arrayMove, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { useSortable } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Plus, GripVertical } from 'lucide-react';
-import { toast } from 'sonner';
+import { useState } from "react";
+import { DndContext, DragEndEvent, closestCenter } from "@dnd-kit/core";
+import {
+  SortableContext,
+  arrayMove,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Plus, GripVertical } from "lucide-react";
+import { toast } from "sonner";
 
 interface KanbanBoardProps {
   ideaId: string;
@@ -27,13 +37,8 @@ interface KanbanCardProps {
 }
 
 function KanbanCard({ card, isDragging }: KanbanCardProps) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-  } = useSortable({ id: card.id });
+  const { attributes, listeners, setNodeRef, transform, transition } =
+    useSortable({ id: card.id });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -59,9 +64,9 @@ function KanbanCard({ card, isDragging }: KanbanCardProps) {
           {card.assignee && (
             <div className="flex items-center space-x-2">
               <Avatar className="h-5 w-5">
-                <AvatarImage src={card.assignee.image ?? ''} />
+                <AvatarImage src={card.assignee.image ?? ""} />
                 <AvatarFallback className="text-xs">
-                  {card.assignee.name?.charAt(0) ?? 'U'}
+                  {card.assignee.name?.charAt(0) ?? "U"}
                 </AvatarFallback>
               </Avatar>
               <span className="text-xs text-muted-foreground">
@@ -76,50 +81,54 @@ function KanbanCard({ card, isDragging }: KanbanCardProps) {
 }
 
 export function KanbanBoard({ ideaId, cards: initialCards }: KanbanBoardProps) {
-  const [cards, setCards] = useState(initialCards);
+  const [cards, setCards] = useState(initialCards || []);
   const [showNewCardDialog, setShowNewCardDialog] = useState(false);
-  const [newCardColumn, setNewCardColumn] = useState('');
+  const [newCardColumn, setNewCardColumn] = useState("");
   const [newCardData, setNewCardData] = useState({
-    title: '',
-    description: '',
+    title: "",
+    description: "",
   });
   const [loading, setLoading] = useState(false);
 
   const columns = [
-    { id: 'BACKLOG', title: 'Backlog', color: 'bg-gray-100' },
-    { id: 'IN_PROGRESS', title: 'In Progress', color: 'bg-blue-100' },
-    { id: 'DONE', title: 'Done', color: 'bg-green-100' },
+    { id: "BACKLOG", title: "Backlog", color: "bg-gray-100" },
+    { id: "IN_PROGRESS", title: "In Progress", color: "bg-blue-100" },
+    { id: "DONE", title: "Done", color: "bg-green-100" },
   ];
 
   const getCardsForColumn = (columnId: string) => {
-    return cards.filter(card => card.column === columnId);
+    if (!cards) {
+      console.warn("Cards is undefined in getCardsForColumn");
+      return [];
+    }
+    return cards.filter((card) => card?.column === columnId);
   };
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
-    
+
     if (!over || active.id === over.id) return;
 
-    const activeCard = cards.find(card => card.id === active.id);
-    const overCard = cards.find(card => card.id === over.id);
-    
+    const activeCard = cards.find((card) => card.id === active.id);
+    const overCard = cards.find((card) => card.id === over.id);
+
     if (!activeCard) return;
 
     // Determine the new column
     let newColumn = activeCard.column;
-    
+
     if (overCard) {
       newColumn = overCard.column;
     } else {
       // Check if dropped on a column
       const columnId = over.id as string;
-      if (columns.some(col => col.id === columnId)) {
+      if (columns.some((col) => col.id === columnId)) {
         newColumn = columnId;
       }
     }
 
     // Update local state
-    const updatedCards = cards.map(card => 
+    const updatedCards = cards.map((card) =>
       card.id === active.id ? { ...card, column: newColumn } : card
     );
     setCards(updatedCards);
@@ -127,15 +136,15 @@ export function KanbanBoard({ ideaId, cards: initialCards }: KanbanBoardProps) {
     // Update on server
     try {
       await fetch(`/api/kanban/${active.id}`, {
-        method: 'PATCH',
+        method: "PATCH",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ column: newColumn }),
       });
     } catch (error) {
-      console.error('Error updating card:', error);
-      toast.error('Failed to update card');
+      console.error("Error updating card:", error);
+      toast.error("Failed to update card");
       // Revert local state on error
       setCards(cards);
     }
@@ -143,17 +152,17 @@ export function KanbanBoard({ ideaId, cards: initialCards }: KanbanBoardProps) {
 
   const handleCreateCard = async () => {
     if (!newCardData.title.trim()) {
-      toast.error('Please enter a card title');
+      toast.error("Please enter a card title");
       return;
     }
 
     setLoading(true);
-    
+
     try {
-      const response = await fetch('/api/kanban', {
-        method: 'POST',
+      const response = await fetch("/api/kanban", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           ideaId,
@@ -164,17 +173,17 @@ export function KanbanBoard({ ideaId, cards: initialCards }: KanbanBoardProps) {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to create card');
+        throw new Error("Failed to create card");
       }
 
       const newCard = await response.json();
       setCards([...cards, newCard]);
       setShowNewCardDialog(false);
-      setNewCardData({ title: '', description: '' });
-      toast.success('Card created successfully!');
+      setNewCardData({ title: "", description: "" });
+      toast.success("Card created successfully!");
     } catch (error) {
-      console.error('Error creating card:', error);
-      toast.error('Failed to create card');
+      console.error("Error creating card:", error);
+      toast.error("Failed to create card");
     } finally {
       setLoading(false);
     }
@@ -191,7 +200,7 @@ export function KanbanBoard({ ideaId, cards: initialCards }: KanbanBoardProps) {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {columns.map((column) => {
             const columnCards = getCardsForColumn(column.id);
-            
+
             return (
               <div key={column.id} className="space-y-4">
                 <div className="flex items-center justify-between">
@@ -210,10 +219,10 @@ export function KanbanBoard({ ideaId, cards: initialCards }: KanbanBoardProps) {
                     <Plus className="h-4 w-4" />
                   </Button>
                 </div>
-                
+
                 <div className="min-h-[400px] p-2 border-2 border-dashed border-muted rounded-lg">
                   <SortableContext
-                    items={columnCards.map(card => card.id)}
+                    items={columnCards.map((card) => card.id)}
                     strategy={verticalListSortingStrategy}
                   >
                     {columnCards.map((card) => (
@@ -239,26 +248,36 @@ export function KanbanBoard({ ideaId, cards: initialCards }: KanbanBoardProps) {
                 id="card-title"
                 placeholder="Enter card title"
                 value={newCardData.title}
-                onChange={(e) => setNewCardData({ ...newCardData, title: e.target.value })}
+                onChange={(e) =>
+                  setNewCardData({ ...newCardData, title: e.target.value })
+                }
               />
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="card-description">Description</Label>
               <Textarea
                 id="card-description"
                 placeholder="Enter card description"
                 value={newCardData.description}
-                onChange={(e) => setNewCardData({ ...newCardData, description: e.target.value })}
+                onChange={(e) =>
+                  setNewCardData({
+                    ...newCardData,
+                    description: e.target.value,
+                  })
+                }
               />
             </div>
-            
+
             <div className="flex justify-end space-x-2">
-              <Button variant="outline" onClick={() => setShowNewCardDialog(false)}>
+              <Button
+                variant="outline"
+                onClick={() => setShowNewCardDialog(false)}
+              >
                 Cancel
               </Button>
               <Button onClick={handleCreateCard} disabled={loading}>
-                {loading ? 'Creating...' : 'Create Card'}
+                {loading ? "Creating..." : "Create Card"}
               </Button>
             </div>
           </div>
